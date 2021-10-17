@@ -1,0 +1,113 @@
+#!/bin/python3
+"""Usage: kontrol.py <command>
+-  : decrease volume
++  : increase volume
+m/mute  : mute
+p/play  : play/pause
+s/stop  : stop playback"""
+
+import sys
+import subprocess
+
+HOSTNAME = "watermelon"
+PORT = 8080
+USERNAME = "kodi"
+PASSWORD = None
+NOTIFY = True
+
+
+def notify(txt):
+    if NOTIFY:
+        subprocess.run(["notify-send", txt])
+    print("NOTIFY: " + txt)
+
+
+try:
+    from kodipydent import Kodi
+except ModuleNotFoundError:
+    notify("kodipydent is required.  pip3 install kodipydent\n")
+    sys.exit(1)
+
+KODI = Kodi(HOSTNAME, username=USERNAME, password=PASSWORD)
+
+
+def volume(increment=None, mute=False):
+    if mute:
+        _mute = KODI.Application.GetProperties(["muted"])["result"]["muted"]
+        if _mute:
+            KODI.Application.SetMute(False)
+        else:
+            KODI.Application.SetMute(True)
+    else:
+        _volume = KODI.Application.GetProperties(["volume"])["result"]["volume"]
+        if "-" in increment:
+            increment = increment.strip("-")
+            adjustment = _volume - int(increment)
+        else:
+            increment = increment.strip("+")
+            adjustment = _volume + int(increment)
+        notify(f"Set {HOSTNAME} volume: {adjustment}")
+        KODI.Application.SetVolume(adjustment)
+
+
+def playback(playpause=False, stop=False):
+    try:
+        _playerid = KODI.Player.GetActivePlayers()["result"][0]["playerid"]
+    except IndexError:
+        notify(f"Nothing playing on {HOSTNAME}")
+        return
+    if playpause:
+        KODI.Player.PlayPause(_playerid)
+    else:
+        KODI.Player.Stop(_playerid)
+
+
+def senttext():
+    try:
+        import tkinter
+        import tkinter.simpledialog
+    except ImportError:
+        pass
+    root = tk.Tk()
+    root.withdraw()
+    txt = tkinter.simpleddialog.askstring("Kontrol", "Send text:")
+    if txt:
+        notify(f"Sent {HOSTNAME}: {txt}")
+    del root
+
+
+def main():
+    arg = None
+    try:
+        arg = sys.argv[1]
+    except IndexError:
+        print(__doc__)
+    else:
+        if "+" in arg or "-" in arg:
+            volume(increment=arg)
+        elif arg == "m" or arg == "mute":
+            volume(mute=True)
+        elif arg == "p" or arg == "play":
+            playback(playpause=True)
+        elif arg == "s" or arg == "stop":
+            playback(stop=True)
+        elif arg == "up":
+            KODI.Input.Up()
+        elif arg == "down":
+            KODI.Input.Down()
+        elif arg == "left":
+            KODI.Input.Left()
+        elif arg == "right":
+            KODI.Input.Right()
+        elif arg == "enter":
+            KODI.Input.Select()
+        elif arg == "back":
+            KODI.Input.Back()
+        elif arg == "senttext":
+            sendtext()
+        else:
+            notify(f"kontrol: unrecognized command {arg}")
+
+
+if __name__ == "__main__":
+    main()

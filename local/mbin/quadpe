@@ -1,0 +1,9 @@
+#!/bin/sh
+t=`date +screenshot_%F_%T.png | sed 's/:/-/g'`
+gnome-screenshot -c -a -f /tmp/$t
+curl -s -F "return_json=true" -F "image=@/tmp/$t" https://quad.pe/api/upload |\
+jq -r '("https://quad.pe/"+.data.id)' |\
+xclip -sel clip
+mkdir -p ~/Pictures/screenshots/
+mv /tmp/$t ~/Pictures/screenshots/
+notify-send --expire-time=2000 "Upload Complete brah"

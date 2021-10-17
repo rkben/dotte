@@ -1,0 +1,2 @@
+#!/bin/sh
+/usr/bin/time -f 'U%U S%S R:%e %MkB | %C' "$@"

@@ -1,0 +1,9 @@
+#!/bin/sh
+if [ -d "/data/Media/Music" ]; then
+   DIR=/data/Media/Music/Download
+else
+    DIR=~/Music
+fi
+
+cd $DIR
+youtube-dl -o '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s' $1
